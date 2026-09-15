@@ -1,0 +1,29 @@
+# Unreal-generated files (also applies to source plugins).
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+
+# IDE caches and generated solutions; keep shared .vsconfig.
+.vs/
+.idea/
+*.sln
+*.slnx
+*.suo
+*.user
+*.VC.db
+*.VC.opendb
+*.opensdf
+*.sdf
+ipch/
+
+# Local credentials and operating-system files.
+.env
+.env.*
+!.env.example
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Keep Build/ (icons/configuration), Config/, Content/ and source assets.
+# Binary-only third-party plugins may need explicit Binaries/ exceptions.
