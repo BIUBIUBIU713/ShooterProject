@@ -104,17 +104,28 @@ git tag -a v0.1.0 -m "首个可演示版本"
 已有共享提交需要撤销时使用 `git revert <提交号>`。不要向共享主分支强制推送，也不要用 `reset --hard` 清理尚未保存的工作。
 首次基线提交仅记录当前项目快照，不自动代表已达到可发布质量；不会自动创建发布标签。
 
-## 远程仓库接入（待配置）
+## 远程仓库
 
-需要确定托管平台、仓库地址、可见性和 LFS 存储/流量额度。初始 `Content/` 约 2.65 GiB，后续修改二进制资产也会消耗存储。
-建议创建空远程仓库，避免自动生成 README 或其他首次提交导致历史分叉。
+本项目的 `origin` 地址为 `https://github.com/BIUBIUBIU713/ShooterProject.git`。
+仓库页面：<https://github.com/BIUBIUBIU713/ShooterProject>。
+初始 `Content/` 约 2.65 GiB，后续修改二进制资产也会消耗 LFS 存储。
 
-拿到实际地址后再运行（下面是占位示例，不能直接复制执行）：
+当前项目已设置 `origin`，无需重复添加。提交完成后推送主分支：
 
 ```powershell
-git remote add origin <实际仓库地址>
 git push -u origin main
 ```
 
-标准 LFS pre-push 钩子会上传资源；推送前应确认远程支持 LFS、配额与账号权限。
-当前本地版本历史不是异地备份，完成远程推送后才有远程副本。
+在其他电脑安装 Git LFS 后，可克隆完整项目：
+
+```powershell
+git clone https://github.com/BIUBIUBIU713/ShooterProject.git
+cd ShooterProject
+git lfs install --local
+git lfs pull
+```
+
+标准 LFS pre-push 钩子会先上传资源；首次上传耗时取决于网络速度。只有 `git push` 成功后，远程才包含对应提交。
+如果因网络错误失败，修复网络后重新执行 `git push -u origin main`；不需要重新初始化仓库或强制推送。
+如果服务端提示 LFS 配额不足，需要在 GitHub 账户侧处理配额后重试。
+远程只包含已提交并推送的内容；未提交的代码、地图和蓝图仍然只在本地。
