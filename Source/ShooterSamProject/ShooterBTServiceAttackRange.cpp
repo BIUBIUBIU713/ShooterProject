@@ -8,6 +8,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
+#include "ShooterMeleeEnemy.h"
 
 UShooterBTServiceAttackRange::UShooterBTServiceAttackRange()
 {
@@ -64,9 +65,18 @@ void UShooterBTServiceAttackRange::TickNode(
 		const float Distance = 
 			ControlledPawn->GetDistanceTo(TargetActor);
 		
+		float EffectiveAttackRange = AttackRange;
+		
+		if (const AShooterMeleeEnemy* MeleeEnemy = 
+			Cast<AShooterMeleeEnemy>(ControlledPawn)	
+		)
+		{
+			EffectiveAttackRange = MeleeEnemy->GetMeleeAttackRange();
+		}
+		
 		bIsInAttackRange = IsDistanceInAttackRange(
 			Distance,
-			AttackRange
+			EffectiveAttackRange
 		);
 	}
 	

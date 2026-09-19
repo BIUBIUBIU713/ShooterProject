@@ -139,5 +139,8 @@ public:
 	{
 		return bIsRecharging;
 	}
+	
+	UFUNCTION(BlueprintPure, Category = "Weapon|Energy")
+	float GetEffectiveRechargeDuration() const;
 
 };

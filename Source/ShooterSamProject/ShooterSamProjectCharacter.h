@@ -151,6 +151,9 @@ protected:
 	)
 	int32 Coins = 0;
 	
+	//保存本角色应用增益前的移动速度
+	float BaseWalkSpeed = 0.0f;
+	
 	//按下充能键时执行
 	void Recharge();
 
@@ -245,6 +248,10 @@ public:
 	UFUNCTION()
 	void OnDamageTaken(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
+	//根据本局增益等级重新计算角色属性
+	UFUNCTION(BlueprintCallable, Category = "Player|Upgrades")
+	void RefreshUpgradeEffects();
+	
 	void Shoot();
 	void UpdateHUD();
 };

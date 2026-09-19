@@ -18,6 +18,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "LocalizationDescriptor.h"
 #include "ShooterSamProjectGameMode.h"
 
 
@@ -114,6 +115,10 @@ void AShooterSamProjectCharacter::BeginPlay()
 		GunMember->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
 		GunMember->OwnerController = GetController();
 	}
+	
+	//蓝图初始化和武器生成完成后，记录基础速度
+	BaseWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	RefreshUpgradeEffects();
 }
 
 void AShooterSamProjectCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -315,6 +320,43 @@ void AShooterSamProjectCharacter::OnDamageTaken(AActor* DamagedActor, float Dama
 			);
 		}
 	}
+}
+
+void AShooterSamProjectCharacter::RefreshUpgradeEffects()
+{
+	if (!IsAlive || !IsValid(GetWorld()) || !FMath::IsFinite(BaseWalkSpeed) ||
+		BaseWalkSpeed <= 0.0f	
+	)
+	{
+		return;
+	}
+	
+	const AShooterSamProjectGameMode* GameMode = 
+		GetWorld()->GetAuthGameMode<AShooterSamProjectGameMode>();
+	
+	if (!IsValid(GameMode))
+	{
+		return;
+	}
+	
+	UCharacterMovementComponent* Movement = GetCharacterMovement();
+	
+	if (!IsValid(Movement))
+	{
+		return;
+	}
+	
+	Movement->MaxWalkSpeed = 
+		BaseWalkSpeed * GameMode->GetMovementSpeedMultiplier();
+	
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("%s movement upgrade applied: base=%.1f, speed=%.1f"),
+		*GetName(),
+		BaseWalkSpeed,
+		Movement->MaxWalkSpeed
+	);
 }
 
 

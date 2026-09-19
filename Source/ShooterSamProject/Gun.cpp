@@ -2,9 +2,12 @@
 
 
 #include "Gun.h"
+
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "ShooterSamProjectCharacter.h"
+#include "ShooterSamProjectGameMode.h"
 
 // Sets default values
 AGun::AGun()
@@ -151,13 +154,15 @@ bool AGun::TryStartRecharge()
 		return false;
 	}
 	
+	const float EffectiveDuration = GetEffectiveRechargeDuration();
+	
 	bIsRecharging = true;
 	
 	GetWorldTimerManager().SetTimer(
 		RechargeTimerHandle,
 		this,
 		&AGun::FinishRecharge,
-		RechargeDuration,
+		EffectiveDuration,
 		false
 	);
 	
@@ -166,10 +171,32 @@ bool AGun::TryStartRecharge()
 		Log,
 		TEXT("%s recharge started: %.2f seconds"),
 		*GetName(),
-		RechargeDuration
+		EffectiveDuration
 	);
 	
 	return true;
+}
+
+float AGun::GetEffectiveRechargeDuration() const
+{
+	float Multiplier = 1.0f;
+	
+	const AShooterSamProjectCharacter* Player = 
+		Cast<AShooterSamProjectCharacter>(GetOwner());
+	
+	//只给玩家武器应用增益，敌人的武器不受影响
+	if (IsValid(Player) && Player->IsPlayerControlled() && IsValid(GetWorld()))
+	{
+		const AShooterSamProjectGameMode* GameMode = 
+			GetWorld()->GetAuthGameMode<AShooterSamProjectGameMode>();
+	
+		if (IsValid(GameMode))
+		{
+			Multiplier = GameMode->GetReloadDurationMultiplier();
+		}
+	}
+	
+	return FMath::Max(RechargeDuration * Multiplier, 0.1f);
 }
 
 void AGun::FinishRecharge()
