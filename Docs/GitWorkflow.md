@@ -49,6 +49,18 @@ git commit -m "feat: 完善波次生成规则"
 上面的 `git add` 仅为示例；有蓝图或地图改动时应同时添加相应 `Content/` 路径。
 提交前快速检查是显式命令，目前没有强制 pre-commit 钩子；Git LFS 的标准钩子由 `git lfs install --local` 安装。
 
+## 多 agent 交替协作
+
+多个编码 agent 交替推进同一功能时，除本文的 Git 约定外，还遵守以下规则：
+
+- 共同入口是 `Docs/协作交接.md`：每轮开始先读，每轮结束前更新「当前进度」。
+- 不并行修改同一批文件。C++ agent 负责 `Source/`、`Scripts/`、编译与自动化测试；编辑器侧的
+  蓝图、行为树、黑板和地图放置由人工或编辑器 agent 完成。
+- `.uasset`、`.umap` 是二进制，不交叉修改，也不由代码侧代改。
+- 只读检查优先于口头结论：`Scripts/Inspect-RegionGuards.ps1` 把蓝图、行为树、黑板、动画槽和
+  地图生成器的真实值写进 `Saved/Automation/RegionGuards/region_guards_report.json`。
+- 交接内容必须是可执行动作（改哪个资产、哪个属性、设成什么值），并区分「已验证」与「待验证」。
+
 ## 验证与合并
 
 ```powershell

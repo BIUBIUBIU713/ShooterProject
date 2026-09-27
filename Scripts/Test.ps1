@@ -25,6 +25,9 @@ $project = Join-Path $projectRoot 'ShooterSamProject.uproject'
 $log = Join-Path $reportDirectory 'Automation.log'
 $arguments = @(
     "`"$project`"", '/Engine/Maps/Entry', '-unattended', '-nop4', '-nosplash', '-nullrhi', '-nosound',
+    # The default DDC graph has no writable node in this environment; memory cache keeps
+    # automation running headless instead of crashing before any test starts.
+    '-DDC-ForceMemoryCache',
     "`"-ExecCmds=Automation RunTests $Filter`"", '"-TestExit=Automation Test Queue Empty"',
     "`"-ReportExportPath=$reportDirectory`"", "`"-abslog=$log`""
 )

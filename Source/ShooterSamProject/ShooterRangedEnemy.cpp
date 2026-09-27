@@ -6,6 +6,7 @@
 #include "Gun.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
+#include "Animation/AnimMontage.h"
 
 void AShooterRangedEnemy::BeginPlay()
 {
@@ -113,8 +114,19 @@ bool AShooterRangedEnemy::TryFire()
 		return false;
 	}
 	
-	NextAllowedFireTime = CurrentTime + FMath::Max(FireInterval, 0.01f);
-	
+	NextAllowedFireTime =
+	CurrentTime + FMath::Max(FireInterval, 0.01f);
+
+	if (IsValid(FireMontage.Get()))
+	{
+		const float SafePlayRate =
+			FMath::IsFinite(FireAnimationPlayRate)
+			? FMath::Max(FireAnimationPlayRate, 0.1f)
+			: 1.0f;
+
+		PlayAnimMontage(FireMontage.Get(), SafePlayRate);
+	}
+
 	return true;
 }
 

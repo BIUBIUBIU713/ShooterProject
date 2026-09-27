@@ -14,6 +14,22 @@ class AShooterSamProjectGameMode;
 class AShooterEnemyBase;
 
 
+// 从 StartWave 开始生效，直到下一阶段开始。
+USTRUCT(BlueprintType)
+struct FShooterWaveCompositionPhase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, Category = "Wave", meta = (ClampMin = "1"))
+    int32 StartWave = 1;
+
+    // 先预留精英名额，再计算普通敌人中远程所占的百分比。
+    UPROPERTY(EditAnywhere, Category = "Wave",
+        meta = (ClampMin = "0", ClampMax = "100"))
+    int32 RangedPercent = 25;
+
+};
+
 UCLASS()
 class SHOOTERSAMPROJECT_API AWaveManager : public AActor
 {
@@ -156,9 +172,52 @@ private:
 	//每次计时器触发时，尝试生成一只敌人
 	void SpawnNextEnemy();
 	
-	//本阶段统一使用普通远程敌人蓝图
-	UPROPERTY(EditInstanceOnly, Category = "Wave|Spawning")
-	TSubclassOf<AShooterEnemyBase> EnemyClass;
+    // 保留原属性名，避免地图中已经配置的普通远程蓝图引用丢失。
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Enemy Classes",
+        meta = (DisplayName = "Ranged Enemy Class"))
+    TSubclassOf<AShooterEnemyBase> EnemyClass;
+
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Enemy Classes")
+    TSubclassOf<AShooterEnemyBase> MeleeEnemyClass;
+
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Enemy Classes")
+    TSubclassOf<AShooterEnemyBase> EliteMeleeEnemyClass;
+
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Enemy Classes")
+    TSubclassOf<AShooterEnemyBase> EliteRangedEnemyClass;
+
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Composition",
+        meta = (TitleProperty = "StartWave"))
+    TArray<FShooterWaveCompositionPhase> CompositionPhases;
+
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Elite Progression",
+        meta = (ClampMin = "1"))
+    int32 EliteStartWave = 21;
+
+    // 精英比例基于整波总人数，而不是普通敌人数。
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Elite Progression",
+        meta = (ClampMin = "0", ClampMax = "100"))
+    int32 EliteStartPercent = 10;
+
+    // 每回合增加的百分点，例如 10% -> 11%，不是乘以 1.01。
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Elite Progression",
+        meta = (ClampMin = "0", ClampMax = "100"))
+    int32 ElitePercentIncreasePerWave = 1;
+
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Elite Progression",
+        meta = (ClampMin = "0", ClampMax = "100"))
+    int32 EliteMaxPercent = 30;
+
+    // 精英内部的远程比例，其余精英为近战。
+    UPROPERTY(EditInstanceOnly, Category = "Wave|Elite Progression",
+        meta = (ClampMin = "0", ClampMax = "100"))
+    int32 EliteRangedPercent = 30;
+
+    bool BuildEnemyClassQueue(int32 WaveNumber);
+
+    // 和出生点队列共用 SpawnedEnemyCount 下标，一一对应。
+    UPROPERTY()
+    TArray<TSubclassOf<AShooterEnemyBase>> EnemyClassQueue;
 	
 	//每一个元素代表一只待生成敌人所使用的出生点
 	//同一个出生点可以多次出现

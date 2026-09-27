@@ -93,7 +93,14 @@ protected:
 	bool ShouldUseTouchControls() const;
 
 public:
-	void ShowGameOverScreen(int32 WaveNumber, int32 RemainingCoins);
+	void ShowGameOverScreen(
+		int32 WaveNumber, 
+		int32 RemainingCoins,
+		bool bInExtractionSucceeded = false
+	);
+	
+	UPROPERTY(BlueprintReadOnly, Category = "GameOver")
+	bool bExtractionSucceeded = false;
 	
 	UFUNCTION(BlueprintCallable, Category = "GameOver")
 	void RestartCurrentRun();

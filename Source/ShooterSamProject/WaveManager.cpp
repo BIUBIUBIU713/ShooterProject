@@ -2,6 +2,7 @@
 
 
 #include "WaveManager.h"
+#include "Containers/Set.h"
 
 #include "EnemySpawnPoint.h"
 #include "ShooterSamProjectGameMode.h"
@@ -19,6 +20,18 @@ AWaveManager::AWaveManager()
 {
  	//WaveManager不需要每一帧都运行代码
 	PrimaryActorTick.bCanEverTick = false;
+
+    const auto AddPhase = [this](int32 StartWave, int32 RangedPercent)
+    {
+        FShooterWaveCompositionPhase Phase;
+        Phase.StartWave = StartWave;
+        Phase.RangedPercent = RangedPercent;
+        CompositionPhases.Add(Phase);
+    };
+
+    AddPhase(1, 25);
+    AddPhase(6, 30);
+
 
 }
 
@@ -345,15 +358,6 @@ void AWaveManager::HandleWaveStarted(int32 WaveNumber)
 		return;
 	}
 	
-	if (!EnemyClass || EnemyClass->HasAnyClassFlags(CLASS_Abstract))
-	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT("Assign a non-abstract EnemyClass on WaveManager.")
-		);
-		return;
-	}
 	
 	//编辑器限制不能代替运行时检查
 	MaxAliveEnemies = FMath::Max(1, MaxAliveEnemies);
@@ -376,7 +380,7 @@ void AWaveManager::HandleWaveStarted(int32 WaveNumber)
 	SelectActiveSpawnPointsForWave(WaveNumber);
 	InitializeWaveRuntimeState(WaveNumber);
 	
-	if (!BuildSpawnQueue(WaveNumber))
+	if (!BuildSpawnQueue(WaveNumber) || !BuildEnemyClassQueue(WaveNumber))
 	{
 		return;
 	}
@@ -624,6 +628,130 @@ bool AWaveManager::BuildSpawnQueue(int32 WaveNumber)
 	return true;
 }
 
+bool AWaveManager::BuildEnemyClassQueue(int32 WaveNumber)
+{
+    EnemyClassQueue.Reset();
+
+    if (WaveNumber < 1 || WaveEnemyTarget <= 0 ||
+        SpawnQueue.Num() != WaveEnemyTarget)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Cannot build enemy classes: invalid wave or spawn queue."));
+        return false;
+    }
+
+    if (EliteStartWave < 1 || EliteStartPercent < 0 || EliteStartPercent > 100 ||
+        ElitePercentIncreasePerWave < 0 || ElitePercentIncreasePerWave > 100 ||
+        EliteMaxPercent < EliteStartPercent || EliteMaxPercent > 100 ||
+        EliteRangedPercent < 0 || EliteRangedPercent > 100)
+    {
+        UE_LOG(LogTemp, Error,
+            TEXT("Invalid Elite Progression settings. Check percentages and start wave."));
+        return false;
+    }
+
+    // 选择已经达到的、StartWave 最大的阶段，数组不必按顺序排列。
+    const FShooterWaveCompositionPhase* SelectedPhase = nullptr;
+    TSet<int32> SeenStartWaves;
+
+    for (const FShooterWaveCompositionPhase& Phase : CompositionPhases)
+    {
+        if (Phase.StartWave < 1 || SeenStartWaves.Contains(Phase.StartWave) ||
+            Phase.RangedPercent < 0 || Phase.RangedPercent > 100)
+        {
+            UE_LOG(LogTemp, Error,
+                TEXT("Invalid CompositionPhases entry: StartWave=%d. Check duplicate waves and values."),
+                Phase.StartWave);
+            return false;
+        }
+
+        SeenStartWaves.Add(Phase.StartWave);
+        if (Phase.StartWave <= WaveNumber &&
+            (!SelectedPhase || Phase.StartWave > SelectedPhase->StartWave))
+        {
+            SelectedPhase = &Phase;
+        }
+    }
+
+    if (!SelectedPhase)
+    {
+        UE_LOG(LogTemp, Error,
+            TEXT("Wave %d has no composition phase. Configure a phase starting at wave 1."),
+            WaveNumber);
+        return false;
+    }
+
+    int32 ElitePercent = 0;
+    if (WaveNumber >= EliteStartWave)
+    {
+        const int64 WavesSinceStart = static_cast<int64>(WaveNumber) - EliteStartWave;
+        const int64 UncappedPercent = static_cast<int64>(EliteStartPercent) +
+            WavesSinceStart * ElitePercentIncreasePerWave;
+        ElitePercent = static_cast<int32>(FMath::Min<int64>(UncappedPercent, EliteMaxPercent));
+    }
+
+    // 先确定总精英数，再分成两种精英，避免分别取整导致名额丢失。
+    const int32 EliteTotal = static_cast<int32>(
+        static_cast<int64>(WaveEnemyTarget) * ElitePercent / 100);
+    const int32 EliteRangedCount = static_cast<int32>(
+        static_cast<int64>(EliteTotal) * EliteRangedPercent / 100);
+    const int32 EliteMeleeCount = EliteTotal - EliteRangedCount;
+
+    const int32 OrdinaryCount = WaveEnemyTarget - EliteTotal;
+    // 整数除法向下取整，其余普通敌人名额全部分给近战。
+    const int32 RangedCount = static_cast<int32>(
+        static_cast<int64>(OrdinaryCount) * SelectedPhase->RangedPercent / 100);
+    const int32 MeleeCount = OrdinaryCount - RangedCount;
+
+    const auto CheckClass = [WaveNumber](TSubclassOf<AShooterEnemyBase> Class,
+        int32 Count, const TCHAR* Label)
+    {
+        if (Count > 0 && (!IsValid(Class.Get()) || Class->HasAnyClassFlags(CLASS_Abstract)))
+        {
+            UE_LOG(LogTemp, Error,
+                TEXT("Wave %d requires a valid, non-abstract %s."), WaveNumber, Label);
+            return false;
+        }
+        return true;
+    };
+
+    if (!CheckClass(MeleeEnemyClass, MeleeCount, TEXT("Melee Enemy Class")) ||
+        !CheckClass(EnemyClass, RangedCount, TEXT("Ranged Enemy Class")) ||
+        !CheckClass(EliteMeleeEnemyClass, EliteMeleeCount,
+            TEXT("Elite Melee Enemy Class")) ||
+        !CheckClass(EliteRangedEnemyClass, EliteRangedCount,
+            TEXT("Elite Ranged Enemy Class")))
+    {
+        return false;
+    }
+
+    EnemyClassQueue.Reserve(WaveEnemyTarget);
+    const auto AppendClass = [this](TSubclassOf<AShooterEnemyBase> Class, int32 Count)
+    {
+        for (int32 Index = 0; Index < Count; ++Index)
+        {
+            EnemyClassQueue.Add(Class);
+        }
+    };
+
+    AppendClass(MeleeEnemyClass, MeleeCount);
+    AppendClass(EnemyClass, RangedCount);
+    AppendClass(EliteMeleeEnemyClass, EliteMeleeCount);
+    AppendClass(EliteRangedEnemyClass, EliteRangedCount);
+
+    // 每波只打乱一次。生成失败时，同一个出生点和敌人类型一起重试。
+    for (int32 Index = EnemyClassQueue.Num() - 1; Index > 0; --Index)
+    {
+        const int32 OtherIndex = SpawnSelectionRandomStream.RandRange(0, Index);
+        EnemyClassQueue.Swap(Index, OtherIndex);
+    }
+
+    UE_LOG(LogTemp, Log,
+        TEXT("Wave %d composition: Total=%d, Melee=%d, Ranged=%d, EliteMelee=%d, EliteRanged=%d, ElitePercent=%d"),
+        WaveNumber, EnemyClassQueue.Num(), MeleeCount, RangedCount,
+        EliteMeleeCount, EliteRangedCount, ElitePercent);
+    return true;
+}
+
 void AWaveManager::StartEnemySpawning()
 {
 	if (bIsSpawning)
@@ -692,17 +820,26 @@ void AWaveManager::SpawnNextEnemy()
 		return;
 	}
 	
-	if (!EnemyClass || !SpawnQueue.IsValidIndex(SpawnedEnemyCount))
+	if (!SpawnQueue.IsValidIndex(SpawnedEnemyCount) ||
+		!EnemyClassQueue.IsValidIndex(SpawnedEnemyCount))
 	{
 		UE_LOG(
 			LogTemp,
 			Error,
-			TEXT("Enemy spawning stopped: invalid class queue index.")
+			TEXT("Enemy spawning stopped: invalid spawn point or class queue index.")
 		);
 		StopEnemySpawning();
 		return;
 	}
 	
+    const TSubclassOf<AShooterEnemyBase> ClassToSpawn = EnemyClassQueue[SpawnedEnemyCount];
+    if (!IsValid(ClassToSpawn.Get()) || ClassToSpawn->HasAnyClassFlags(CLASS_Abstract))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Enemy spawning stopped: queued enemy class is invalid."));
+        StopEnemySpawning();
+        return;
+    }
+
 	//累计成功生成数量，也是下一份出生安排的下标
 	AEnemySpawnPoint* SpawnPoint = SpawnQueue[SpawnedEnemyCount].Get();
 	
@@ -737,7 +874,7 @@ void AWaveManager::SpawnNextEnemy()
 	
 	AShooterEnemyBase* NewEnemy = 
 		World->SpawnActor<AShooterEnemyBase>(
-			EnemyClass.Get(),
+			ClassToSpawn.Get(),
 			SpawnTransform.GetLocation(),
 			SpawnTransform.Rotator(),
 			SpawnParameters

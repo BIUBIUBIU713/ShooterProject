@@ -53,6 +53,33 @@ float AShooterEnemyBase::TakeDamage(
 		return 0.0f;
 	}
 	
+	// 判断伤害来源是否属于敌人阵营。
+	// 当前普通敌人、精英敌人都继承 ShooterEnemyBase。
+	const auto IsEnemyActor = [](const AActor* Actor)
+	{
+		return IsValid(Actor) && Actor->IsA<AShooterEnemyBase>();
+	};
+
+	const bool bFromEnemyController =
+		IsValid(EventInstigator) &&
+		IsEnemyActor(EventInstigator->GetPawn());
+
+	const bool bFromEnemyCauser =
+		IsEnemyActor(DamageCauser);
+
+	const bool bFromEnemyWeapon =
+		IsValid(DamageCauser) &&
+		(
+			IsEnemyActor(DamageCauser->GetOwner()) ||
+			IsEnemyActor(DamageCauser->GetInstigator())
+		);
+
+	// 在 Super::TakeDamage 前拒绝，避免触发后续受伤事件。
+	if (bFromEnemyController || bFromEnemyCauser || bFromEnemyWeapon)
+	{
+		return 0.0f;
+	}
+	
 	const float AppliedDamage = Super::TakeDamage(
 		DamageAmount,
 		DamageEvent,

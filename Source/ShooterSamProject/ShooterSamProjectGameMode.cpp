@@ -8,9 +8,57 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
+#include "ShooterSamProjectPlayerController.h"
+
 AShooterSamProjectGameMode::AShooterSamProjectGameMode()
 {
 	PrimaryActorTick.bCanEverTick = false;
+}
+
+bool AShooterSamProjectGameMode::TryCompleteExtraction(AShooterSamProjectCharacter* Player)
+{
+	if (WaveState == EWaveState::GameOver ||
+		!IsValid(Player) ||
+		!Player->IsAlive ||
+		!Player->IsPlayerControlled() ||
+		Player->GetWorld() != GetWorld() ||
+		!IsRegionUnlocked(FName(TEXT("ExtractionBuilding")))
+	)
+	{
+		return false;
+	}
+	
+	AShooterSamProjectPlayerController* PC = 
+		Cast<AShooterSamProjectPlayerController>(
+			Player->GetController()	
+		);
+	
+	if (!IsValid(PC) || !PC->IsLocalPlayerController())
+	{
+		return false;
+	}
+	
+	//结算后不再承受伤害
+	Player->SetCanBeDamaged(false);
+	
+	//复用现有结束流程：停止回合计时和敌人生成
+	SetGameOver();
+	
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("Extraction succeeded: wave = %d coins = %d"),
+		CurrentWave,
+		Player->GetCoins()
+	);
+	
+	PC->ShowGameOverScreen(
+		CurrentWave,
+		Player->GetCoins(),
+		true
+	);
+	
+	return true;
 }
 
 bool AShooterSamProjectGameMode::TryCollectPowerPart()
@@ -60,9 +108,10 @@ bool AShooterSamProjectGameMode::TryActivatePower()
 
 void AShooterSamProjectGameMode::RecordRegionUnlocked(FName RegionId)
 {
-	if (!RegionId.IsNone())
+	if (WaveState != EWaveState::GameOver && !RegionId.IsNone() && !UnlockedRegions.Contains(RegionId))
 	{
 		UnlockedRegions.Add(RegionId);
+		OnRegionUnlocked.Broadcast(RegionId);
 	}
 }
 

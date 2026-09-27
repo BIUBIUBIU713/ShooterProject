@@ -55,6 +55,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAliveEnemyCountChanged, int32, Al
 //GameOver
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRunGameOver);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRegionUnlocked, FName, RegionId);
+
 UCLASS(abstract)
 class AShooterSamProjectGameMode : public AGameModeBase
 {
@@ -65,6 +67,9 @@ public:
 	
 	/** Constructor */
 	AShooterSamProjectGameMode();
+	
+	UFUNCTION(BlueprintCallable, Category = "Extraction")
+	bool TryCompleteExtraction(AShooterSamProjectCharacter* Player);
 	
 	//领取兵营中的通电道具
 	UFUNCTION(BlueprintCallable, Category = "Progression")
@@ -174,6 +179,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Wave|Events")
 	FOnRunGameOver OnGameOver;
+
+	UPROPERTY(BlueprintAssignable, Category = "Progression|Events")
+	FOnRegionUnlocked OnRegionUnlocked;
 	
 	//区域门成功解锁后调用
 	void RecordRegionUnlocked(FName RegionId);

@@ -70,7 +70,7 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere)
 	AGun* GunMember;
-	
+
 	//角色生命上限，由蓝图配置
 	UPROPERTY(
 		EditDefaultsOnly,

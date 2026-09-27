@@ -22,6 +22,13 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	// 每把枪独立配置两次成功开火之间的最短间隔，单位为秒。
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", meta = (ClampMin = "0.01", Units = "s"))
+	float FireInterval = 0.15f;
+
+	// 冷却属于当前枪械实例，松开或重新按下射击键不会重置。
+	double NextAllowedFireTime = 0.0;
 	
 	//是否启用能量消耗，由每种武器的蓝图进行分配
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Energy")

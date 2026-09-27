@@ -137,8 +137,8 @@ void AShooterSamProjectCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AShooterSamProjectCharacter::Look);
 		
-		//Shooting
-		EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Started, this, &AShooterSamProjectCharacter::Shoot);
+		// 按住时持续请求射击，枪械负责射速限制；松开后停止触发。
+		EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Triggered, this, &AShooterSamProjectCharacter::Shoot);
 		
 		//Recharging
 		if (RechargeAction)
@@ -362,11 +362,11 @@ void AShooterSamProjectCharacter::RefreshUpgradeEffects()
 
 void AShooterSamProjectCharacter::Shoot()
 {
-	if (!IsAlive || !IsValid(GunMember) || !IsValid(GetController()))
+	if (!IsAlive || !IsValid(GunMember) || !IsValid(GetController()) || !IsValid(GetWorld()))
 	{
 		return;
 	}
-	
+
 	GunMember->OwnerController = GetController();
 	GunMember->PullTrigger();
 }

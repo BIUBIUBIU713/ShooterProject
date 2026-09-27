@@ -7,6 +7,7 @@
 #include "ShooterRangedEnemy.generated.h"
 
 class AGun;
+class UAnimMontage;
 /**
  * 
  */
@@ -43,6 +44,17 @@ protected:
 		meta = (ClampMin = "0.01")
 	)
 	float FireInterval = 0.8f;
+	
+	// 只有实际成功开枪，才播放这个蒙太奇。
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Animation")
+	TObjectPtr<UAnimMontage> FireMontage = nullptr;
+
+	UPROPERTY(
+		EditDefaultsOnly,
+		Category = "Enemy|Animation",
+		meta = (ClampMin = "0.1")
+	)
+	float FireAnimationPlayRate = 1.5f;
 	
 	
 private:

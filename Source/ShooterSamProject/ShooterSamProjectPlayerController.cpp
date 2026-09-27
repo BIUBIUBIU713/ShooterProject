@@ -13,6 +13,7 @@
 #include "SupplyStation.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Camera/PlayerCameraManager.h"
 
 void AShooterSamProjectPlayerController::BeginPlay()
 {
@@ -196,13 +197,16 @@ void AShooterSamProjectPlayerController::PlayerTick(float DeltaTime)
 
 void AShooterSamProjectPlayerController::ShowGameOverScreen(
 	int32 WaveNumber,
-	int32 RemainingCoins
+	int32 RemainingCoins,
+	bool bInExtractionSucceed
 )
 {
 	if (!IsLocalPlayerController() || bGameOverHandled)
 	{
 		return;
 	}
+	
+	bExtractionSucceeded = bInExtractionSucceed;
 	
 	//必须先关闭补给菜单，再切换到结算界面
 	CloseSupplyMenu();
@@ -226,6 +230,34 @@ void AShooterSamProjectPlayerController::ShowGameOverScreen(
 	SetInputMode(InputMode);
 	
 	bShowMouseCursor = false;
+	
+	//撤离条件已满足：保留动画更新，淡出后再显示结算并暂停
+	if (bExtractionSucceeded)
+	{
+		constexpr float TransitionDuration = 0.5f;
+		
+		if (PlayerCameraManager)
+		{
+			PlayerCameraManager->StartCameraFade(
+				0.0f,
+				1.0f,
+				TransitionDuration,
+				FLinearColor::Black,
+				false,
+				true
+			);
+		}
+		
+		GetWorldTimerManager().SetTimer(
+			DeathPresentationTimerHandle,
+			this,
+			&AShooterSamProjectPlayerController::FinishDeathPresentation,
+			TransitionDuration,
+			false
+		);
+		
+		return;
+	}
 	
 	const float Delay = FMath::IsFinite(DeathPresentationDuration)
 	? FMath::Max(DeathPresentationDuration, 0.1f)
@@ -286,6 +318,11 @@ void AShooterSamProjectPlayerController::RestartCurrentRun()
 	{
 		GameOverWidget->RemoveFromParent();
 		GameOverWidget = nullptr;
+	}
+	
+	if (PlayerCameraManager)
+	{
+		PlayerCameraManager->StopCameraFade();
 	}
 	
 	RestoreGameplayInput();

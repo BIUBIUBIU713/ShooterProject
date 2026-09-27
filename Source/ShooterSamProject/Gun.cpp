@@ -73,6 +73,12 @@ bool AGun::PullTrigger()
 	{
 		return false;
 	}
+
+	const double CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime < NextAllowedFireTime)
+	{
+		return false;
+	}
 	
 	if (bUsesEnergy)
 	{
@@ -95,6 +101,11 @@ bool AGun::PullTrigger()
 		);
 	}
 	
+	// 通过冷却和能量检查后才占用下一次开火时间。
+	const float SafeFireInterval = FMath::IsFinite(FireInterval)
+		? FMath::Max(FireInterval, 0.01f) : 0.15f;
+	NextAllowedFireTime = CurrentTime + SafeFireInterval;
+
 	MuzzleFlashParticleSystem->Activate(true);
 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), ShootSound, GetActorLocation());
 	
