@@ -58,6 +58,16 @@ class SHOOTERSAMPROJECT_API UShooterBTTaskMeleeAttack
 
 public:
     UShooterBTTaskMeleeAttack();
+    
+    FName GetSlotName() const
+    {
+        return SlotName;
+    }
+    
+    const TArray<FShooterMeleeAttackOption>& GetAttack() const
+    {
+        return Attacks;
+    }
 
 protected:
     virtual EBTNodeResult::Type ExecuteTask(

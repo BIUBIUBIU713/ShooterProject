@@ -136,6 +136,7 @@ void AShooterEnemyBase::HandleDeath(AController* KillerController)
 	bIsDead = true;
 	CurrentHealth = 0.0f;
 	SetCanBeDamaged(false);
+	OnDeathStarted();
 	
 	AAIController* AIController = Cast<AAIController>(GetController());
 	
@@ -160,7 +161,7 @@ void AShooterEnemyBase::HandleDeath(AController* KillerController)
 		Movement->DisableMovement();
 	}
 	
-	//当前没有死亡动画或布娃娃，死亡后不再阻挡其他角色
+	//死亡后不再阻挡其他角色，动画由派生类自行处理。
 	SetActorEnableCollision(false);
 	
 	//与控制器解除关系，走UE的Pawn销毁前处理流程

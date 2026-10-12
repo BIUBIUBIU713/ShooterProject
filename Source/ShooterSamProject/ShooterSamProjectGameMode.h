@@ -13,6 +13,17 @@
  */
 
 class AShooterSamProjectCharacter;
+class AShooterBossEnemy;
+class AShooterEnemyBase;
+
+UENUM(BlueprintType)
+enum class EBossEncounterState : uint8
+{
+	NotStarted,
+	InProgress,
+	Defeated,
+	Cancelled
+};
 
 // 当前波次所属状态
 UENUM(BlueprintType)
@@ -67,6 +78,18 @@ public:
 	
 	/** Constructor */
 	AShooterSamProjectGameMode();
+
+	// Boss 单独登记，不加入普通波次的存活计数。
+	bool TryStartBossEncounter(AShooterSamProjectCharacter* Player, AShooterBossEnemy* Boss);
+
+	UFUNCTION(BlueprintPure, Category = "Boss|Encounter")
+	EBossEncounterState GetBossEncounterState() const { return BossEncounterState; }
+
+	UFUNCTION(BlueprintPure, Category = "Boss|Encounter")
+	bool IsBossDefeated() const { return BossEncounterState == EBossEncounterState::Defeated; }
+
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	bool CanUnlockRegion(FName RegionId) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Extraction")
 	bool TryCompleteExtraction(AShooterSamProjectCharacter* Player);
@@ -218,6 +241,20 @@ protected:
 	void InitializePlacedEnemies();
 	
 private:
+	UFUNCTION()
+	void HandleEncounterBossDied(AShooterEnemyBase* DeadEnemy);
+
+	UFUNCTION()
+	void HandleEncounterBossDestroyed(AActor* DestroyedActor);
+
+	void UnbindEncounterBoss();
+
+	UPROPERTY(VisibleInstanceOnly, Category = "Boss|Encounter")
+	EBossEncounterState BossEncounterState = EBossEncounterState::NotStarted;
+
+	UPROPERTY(Transient)
+	TObjectPtr<AShooterBossEnemy> EncounterBoss;
+
 	FTimerHandle WaveTimerHandle;
 	
 	//表示本波生成任务已全部完成，不是“暂时暂停生成”

@@ -3,6 +3,7 @@
 #include "ShooterSamProjectGameMode.h"
 
 #include "ShooterSamProjectCharacter.h"
+#include "ShooterBossEnemy.h"
 #include "shootAI.h"
 
 #include "Kismet/GameplayStatics.h"
@@ -15,6 +16,70 @@ AShooterSamProjectGameMode::AShooterSamProjectGameMode()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
+bool AShooterSamProjectGameMode::CanUnlockRegion(FName RegionId) const
+{
+	return WaveState != EWaveState::GameOver &&
+		(RegionId != FName(TEXT("ExtractionBuilding")) || IsBossDefeated());
+}
+
+bool AShooterSamProjectGameMode::TryStartBossEncounter(AShooterSamProjectCharacter* Player, AShooterBossEnemy* Boss)
+{
+	if (WaveState == EWaveState::GameOver || BossEncounterState != EBossEncounterState::NotStarted ||
+		!IsUpgradeStationUnlocked() || !IsValid(Player) || !Player->IsAlive ||
+		!Player->IsPlayerControlled() || Player->GetWorld() != GetWorld() ||
+		!IsValid(Boss) || Boss->GetWorld() != GetWorld() || !Boss->CanStartEncounter())
+	{
+		return false;
+	}
+
+	// 先登记再触发入场，防止同步回调或第二个开关重复启动。
+	EncounterBoss = Boss;
+	BossEncounterState = EBossEncounterState::InProgress;
+	Boss->OnEnemyDied.AddUniqueDynamic(this, &AShooterSamProjectGameMode::HandleEncounterBossDied);
+	Boss->OnDestroyed.AddUniqueDynamic(this, &AShooterSamProjectGameMode::HandleEncounterBossDestroyed);
+	if (!Boss->StartEncounterEntrance())
+	{
+		UnbindEncounterBoss();
+		BossEncounterState = EBossEncounterState::NotStarted;
+		return false;
+	}
+	UE_LOG(LogTemp, Log, TEXT("Boss encounter started: %s; ordinary waves continue"), *Boss->GetName());
+	return true;
+}
+
+void AShooterSamProjectGameMode::UnbindEncounterBoss()
+{
+	if (IsValid(EncounterBoss))
+	{
+		EncounterBoss->OnEnemyDied.RemoveDynamic(this, &AShooterSamProjectGameMode::HandleEncounterBossDied);
+		EncounterBoss->OnDestroyed.RemoveDynamic(this, &AShooterSamProjectGameMode::HandleEncounterBossDestroyed);
+	}
+	EncounterBoss = nullptr;
+}
+
+void AShooterSamProjectGameMode::HandleEncounterBossDied(AShooterEnemyBase* DeadEnemy)
+{
+	if (WaveState == EWaveState::GameOver || BossEncounterState != EBossEncounterState::InProgress ||
+		!IsValid(DeadEnemy) || DeadEnemy != EncounterBoss || !DeadEnemy->IsDead())
+	{
+		return;
+	}
+	BossEncounterState = EBossEncounterState::Defeated;
+	UnbindEncounterBoss();
+	// 仅满足门的前置条件；不自动开门，也不重复发放基类已结算的击杀奖励。
+	UE_LOG(LogTemp, Log, TEXT("Boss defeated: extraction building can now be unlocked by interaction"));
+}
+
+void AShooterSamProjectGameMode::HandleEncounterBossDestroyed(AActor* DestroyedActor)
+{
+	if (BossEncounterState == EBossEncounterState::InProgress && DestroyedActor == EncounterBoss)
+	{
+		BossEncounterState = EBossEncounterState::Cancelled;
+		UnbindEncounterBoss();
+		UE_LOG(LogTemp, Warning, TEXT("Boss encounter cancelled: Boss removed without a confirmed defeat"));
+	}
+}
+
 bool AShooterSamProjectGameMode::TryCompleteExtraction(AShooterSamProjectCharacter* Player)
 {
 	if (WaveState == EWaveState::GameOver ||
@@ -22,6 +87,7 @@ bool AShooterSamProjectGameMode::TryCompleteExtraction(AShooterSamProjectCharact
 		!Player->IsAlive ||
 		!Player->IsPlayerControlled() ||
 		Player->GetWorld() != GetWorld() ||
+		!IsBossDefeated() ||
 		!IsRegionUnlocked(FName(TEXT("ExtractionBuilding")))
 	)
 	{
@@ -108,7 +174,7 @@ bool AShooterSamProjectGameMode::TryActivatePower()
 
 void AShooterSamProjectGameMode::RecordRegionUnlocked(FName RegionId)
 {
-	if (WaveState != EWaveState::GameOver && !RegionId.IsNone() && !UnlockedRegions.Contains(RegionId))
+	if (CanUnlockRegion(RegionId) && !RegionId.IsNone() && !UnlockedRegions.Contains(RegionId))
 	{
 		UnlockedRegions.Add(RegionId);
 		OnRegionUnlocked.Broadcast(RegionId);
@@ -232,6 +298,15 @@ void AShooterSamProjectGameMode::SetGameOver()
 	}
 	
 	WaveState = EWaveState::GameOver;
+	if (BossEncounterState == EBossEncounterState::InProgress)
+	{
+		BossEncounterState = EBossEncounterState::Cancelled;
+		if (IsValid(EncounterBoss))
+		{
+			EncounterBoss->CancelEncounter();
+		}
+		UnbindEncounterBoss();
+	}
 	
 	GetWorldTimerManager().ClearTimer(WaveTimerHandle);
 	

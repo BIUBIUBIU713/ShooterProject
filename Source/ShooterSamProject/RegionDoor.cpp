@@ -101,6 +101,10 @@ bool ARegionDoor::CanInteract(AShooterSamProjectCharacter* Player) const
 
 FText ARegionDoor::GetInteractionText() const
 {
+	if (!IsBossRequirementMet())
+	{
+		return NSLOCTEXT("RegionDoor", "BossRequired", "需要先击败 Boss，才能解锁撤离楼");
+	}
 	if (UnlockCost < 0 || RequiredWave < 0)
 	{
 		return NSLOCTEXT(
@@ -156,7 +160,7 @@ bool ARegionDoor::TryInteract(AShooterSamProjectCharacter* Player)
 	AShooterSamProjectGameMode* GameMode = 
 		GetWorld()->GetAuthGameMode<AShooterSamProjectGameMode>();
 	
-	if (!IsValid(GameMode))
+	if (!IsValid(GameMode) || !GameMode->CanUnlockRegion(DoorGroupId))
 	{
 		return false;
 	}
@@ -311,10 +315,23 @@ bool ARegionDoor::TryInteract(AShooterSamProjectCharacter* Player)
 bool ARegionDoor::CanStartOpening() const
 {
 	return !bUnlocked
+		&& IsBossRequirementMet()
 		&& FMath::IsFinite(SinkDistance)
 		&& SinkDistance > 0.0f
 		&& FMath::IsFinite(SinkSpeed)
 		&& SinkSpeed > 0.0f;
+}
+
+bool ARegionDoor::IsBossRequirementMet() const
+{
+	// 现有撤离楼分组自动接入，其他门的条件不变。
+	if (DoorGroupId != FName(TEXT("ExtractionBuilding")))
+	{
+		return true;
+	}
+	const AShooterSamProjectGameMode* GameMode = GetWorld()
+		? GetWorld()->GetAuthGameMode<AShooterSamProjectGameMode>() : nullptr;
+	return IsValid(GameMode) && GameMode->CanUnlockRegion(DoorGroupId);
 }
 
 void ARegionDoor::StartOpening()

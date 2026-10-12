@@ -16,6 +16,7 @@ UCLASS()
 class SHOOTERSAMPROJECT_API ARegionDoor : public AActor, public IShooterInteractable
 {
 	GENERATED_BODY()
+	friend class FShooterBossEncounterTest;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -75,6 +76,7 @@ protected:
 	
 	//当前是满足供电需求
 	bool IsPowerRequiredmenMet() const;
+	bool IsBossRequirementMet() const;
 	
 	//当前是否满足回合要求
 	bool HasReachedRequiredWave() const;

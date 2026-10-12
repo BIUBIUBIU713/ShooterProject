@@ -94,6 +94,9 @@ protected:
 	
 	//接受造成致死伤害的控制器，用于判断奖励归属
 	void HandleDeath(AController* KillerController);
+
+	// 已标记死亡，尚未停止行为树或广播；派生类可先撤销攻击资格。
+	virtual void OnDeathStarted() {}
 	
 	//死亡后保留多久，再销毁敌人
 	UPROPERTY(
