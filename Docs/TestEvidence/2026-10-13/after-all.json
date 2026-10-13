@@ -1,0 +1,229 @@
+{
+  "format": "Selected fields from Unreal Automation index.json; not a full original report",
+  "sourceRun": "20261013-123926-a19ad946",
+  "sourceReportSHA256": "58f438937cb426d377344f011116ca97cd953adb8da1935ea2fcbd3ca57aa1ca",
+  "reportCreatedOnUTC": "2026.10.13-04.39.42",
+  "mode": "WindowsEditor Development, NullRHI",
+  "counts": {
+    "succeeded": 24,
+    "succeededWithWarnings": 2,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0
+  },
+  "tests": [
+    {
+      "name": "ShooterSam.Boss.Death.InterruptionAndPriority",
+      "state": "Success",
+      "events": [
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\DynamicInputScripts\\SequentialInt.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\ModuleScripts\\AddVectorToPosition.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\ModuleScripts\\FixShapeVector.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\DynamicInputScripts\\MakeQuatFromEuler.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        }
+      ]
+    },
+    {
+      "name": "ShooterSam.Boss.Encounter.ProgressionAndLifecycle",
+      "state": "Success",
+      "events": [
+        {
+          "type": "Info",
+          "message": "Scenario 0: pending entrance actions=1, actor tick=1, mesh tick=1"
+        },
+        {
+          "type": "Warning",
+          "message": "LogTemp: Wave 1 started"
+        },
+        {
+          "type": "Info",
+          "message": "After ticks: time=13.35 latent=0 montage=AM_Boss_Shoot position=0.90 controller=ShooterEnemyAIController_0"
+        },
+        {
+          "type": "Warning",
+          "message": "LogWorld: UWorld::CleanupWorld called on a world that has begun play, missing call to EndPlay (Untitled)"
+        },
+        {
+          "type": "Info",
+          "message": "Scenario 1: pending entrance actions=1, actor tick=1, mesh tick=1"
+        },
+        {
+          "type": "Warning",
+          "message": "LogTemp: Game Over at wave 0"
+        },
+        {
+          "type": "Warning",
+          "message": "LogWorld: UWorld::CleanupWorld called on a world that has begun play, missing call to EndPlay (Untitled)"
+        },
+        {
+          "type": "Info",
+          "message": "Scenario 2: pending entrance actions=1, actor tick=1, mesh tick=1"
+        },
+        {
+          "type": "Warning",
+          "message": "LogTemp: Boss encounter cancelled: Boss removed without a confirmed defeat"
+        },
+        {
+          "type": "Warning",
+          "message": "LogWorld: UWorld::CleanupWorld called on a world that has begun play, missing call to EndPlay (Untitled)"
+        },
+        {
+          "type": "Info",
+          "message": "Scenario 3: pending entrance actions=1, actor tick=1, mesh tick=1"
+        },
+        {
+          "type": "Warning",
+          "message": "LogTemp: Wave 1 started"
+        },
+        {
+          "type": "Info",
+          "message": "After ticks: time=13.35 latent=0 montage=AM_Boss_Shoot position=0.90 controller=ShooterEnemyAIController_0"
+        },
+        {
+          "type": "Warning",
+          "message": "LogTemp: Game Over at wave 1"
+        },
+        {
+          "type": "Warning",
+          "message": "LogWorld: UWorld::CleanupWorld called on a world that has begun play, missing call to EndPlay (Untitled)"
+        }
+      ]
+    },
+    {
+      "name": "ShooterSam.Boss.Shoot.RangeAndSelection",
+      "state": "Success",
+      "events": [
+        {
+          "type": "Info",
+          "message": "Tree selection: active=ShooterBTTaskBossShoot_0 shooting=1 ready=0"
+        }
+      ]
+    },
+    {
+      "name": "ShooterSam.Enemy.AIControlled.CachesControlledEnemy",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.AIController.ClearsControlledEnemyOnUnPossess",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.AIController.ControlledEnemyType",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.AttackRange.DistanceRule",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.Death.DefaultAlive",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.Death.DelegateExists",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.Death.IsDeadGetter",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.DefaultCurrentHealth",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.DefaultMaxHealth",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.GetCurrentHealth",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.GetMaxHealth",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.Enemy.Base.IsAbstract",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.RegionGuards.Composition",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.EnemyCount.Boundaries",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.EnemyCount.Progression",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnFlow.Completion",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnFlow.Pause",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnFlow.Resume",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnPointCount.Boundaries",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnPointCount.Progression",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnPointSelection.Boundaries",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnPointSelection.DeterministicSeed",
+      "state": "Success",
+      "events": []
+    },
+    {
+      "name": "ShooterSam.WaveManager.SpawnPointSelection.Validity",
+      "state": "Success",
+      "events": []
+    }
+  ]
+}

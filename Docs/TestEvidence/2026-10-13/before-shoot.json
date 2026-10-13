@@ -1,0 +1,54 @@
+{
+  "format": "Selected fields from Unreal Automation index.json; not a full original report",
+  "sourceRun": "20261013-123526-cf033e07",
+  "sourceReportSHA256": "aa9e298bb41854a016f1201baeae51b01025ef6ea5da2cde0bdabb3e11ac70f6",
+  "reportCreatedOnUTC": "2026.10.13-04.35.48",
+  "mode": "WindowsEditor Development, NullRHI",
+  "counts": {
+    "succeeded": 0,
+    "succeededWithWarnings": 0,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0
+  },
+  "tests": [
+    {
+      "name": "ShooterSam.Boss.Shoot.RangeAndSelection",
+      "state": "Fail",
+      "events": [
+        {
+          "type": "Info",
+          "message": "LogStreaming: FlushAsyncLoading(327): 1 QueuedPackages, 0 AsyncPackages"
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\DynamicInputScripts\\SequentialInt.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\ModuleScripts\\AddVectorToPosition.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\ModuleScripts\\FixShapeVector.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\DynamicInputScripts\\MakeQuatFromEuler.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Error",
+          "message": "Expected 'Shoot readiness observer exists' to be 1, but it was 0."
+        },
+        {
+          "type": "Info",
+          "message": "LogSkinnedAsset: 正在等待蒙皮资产就绪0/1（Wraith_LunarOps）……"
+        },
+        {
+          "type": "Error",
+          "message": "Expected 'Special sweep still starts within melee range' to be true."
+        }
+      ]
+    }
+  ]
+}

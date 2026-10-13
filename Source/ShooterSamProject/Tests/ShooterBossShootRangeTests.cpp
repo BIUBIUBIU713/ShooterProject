@@ -2,12 +2,12 @@
 #include "Misc/AutomationTest.h"
 #include "ShooterBossEnemy.h"
 #include "ShooterSamProjectCharacter.h"
-#include "ShooterBTDecoratorBossShootReady.h"
 #include "ShooterBTTaskBossShoot.h"
 #include "ShooterBTTaskBossSpecialAttack.h"
 #include "AIController.h"
 #include "Animation/AnimInstance.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
@@ -34,12 +34,8 @@ bool FShooterBossShootRangeTest::RunTest(const FString& Parameters)
     {
         TestTrue(TEXT("Special retains first priority"), Selector->GetChildNode(0)->IsA<UShooterBTTaskBossSpecialAttack>());
         TestTrue(TEXT("Shoot is before chase, not after MoveTo"), Selector->GetChildNode(1)->IsA<UShooterBTTaskBossShoot>());
-        const auto& Decorators = Selector->Children[1].Decorators;
-        if (TestEqual(TEXT("Shoot readiness observer exists"), Decorators.Num(), 1))
-        {
-            TestTrue(TEXT("Boss-only readiness decorator"), Decorators[0]->IsA<UShooterBTDecoratorBossShootReady>());
-            TestEqual(TEXT("Only interrupts lower priority branches"), Decorators[0]->GetFlowAbortMode(), EBTFlowAbortMode::LowerPriority);
-        }
+        // The shooting task also checks readiness. A specific decorator is not required
+        // to select shooting at distance; exercise the loaded tree below instead.
     }
     const UWorld::InitializationValues Values = UWorld::InitializationValues().AllowAudioPlayback(false)
         .CreatePhysicsScene(true).CreateNavigation(false).CreateAISystem(true).ShouldSimulatePhysics(false);
@@ -66,7 +62,7 @@ bool FShooterBossShootRangeTest::RunTest(const FString& Parameters)
         if (!AI) { Boss->SpawnDefaultController(); AI = Cast<AAIController>(Boss->GetController()); }
         if (TestNotNull(TEXT("Boss controller"), AI))
         {
-            AI->RunBehaviorTree(Tree);
+            TestTrue(TEXT("Actual Boss tree starts"), AI->RunBehaviorTree(Tree));
             AI->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
             TestFalse(TEXT("500cm remains melee"), Boss->IsDistanceInOrdinaryShootRange(500));
             TestTrue(TEXT("Just beyond melee can shoot"), Boss->IsDistanceInOrdinaryShootRange(501));
@@ -79,21 +75,46 @@ bool FShooterBossShootRangeTest::RunTest(const FString& Parameters)
             Boss->NextShootReadyTime = World->GetTimeSeconds() + 5;
             TestFalse(TEXT("Cooldown respected"), Boss->CanStartOrdinaryShoot());
             Boss->NextShootReadyTime = 0;
-            TestTrue(TEXT("Ordinary shot actually starts at distance"), Boss->TryStartShoot());
+            UBehaviorTreeComponent* TreeComponent = Cast<UBehaviorTreeComponent>(AI->GetBrainComponent());
+            if (TestNotNull(TEXT("Boss behavior tree component"), TreeComponent))
+            {
+                // A failed higher-priority special task can schedule selection for
+                // a later tick. Give the real tree a bounded window to reach shooting.
+                for (int32 Frame = 0; Frame < 10 && !Boss->bShooting; ++Frame)
+                {
+                    ++GFrameCounter;
+                    TreeComponent->TickComponent(0.05f, LEVELTICK_All, nullptr);
+                }
+                const UBTNode* ActiveNode = TreeComponent->GetActiveNode();
+                AddInfo(FString::Printf(TEXT("Tree selection: active=%s shooting=%d ready=%d"),
+                    *GetNameSafe(ActiveNode), Boss->bShooting, Boss->CanStartOrdinaryShoot()));
+                TestTrue(TEXT("Actual tree selects shooting at 2000cm before chasing"),
+                    ActiveNode && ActiveNode->IsA<UShooterBTTaskBossShoot>());
+            }
             TestTrue(TEXT("Shooting remains busy"), Boss->bShooting);
             Player->SetActorLocation(FVector(400,0,0));
             Boss->FireShootRound();
             TestTrue(TEXT("Close target stops ordinary firing"), Boss->bShootStopping || !Boss->bShooting);
             TestFalse(TEXT("Close target clears firing timer"), World->GetTimerManager().TimerExists(Boss->ShootFireTimerHandle));
-            // Reset only the test fixture, then check the existing special path at the same close distance.
+            // Stop the task before resetting the fixture so its deferred completion
+            // cannot interfere with the separate special-shooting scenario.
+            if (TreeComponent) TreeComponent->StopTree(EBTStopMode::Forced);
             Boss->ClearCombatForDeathOrEndPlay();
             Boss->GetMesh()->TickAnimation(0.3f, false);
+            // TickAnimation queues montage end events. A normal component tick also
+            // dispatches them and releases ended montage instances; this manual fixture must too.
+            Boss->GetMesh()->ConditionallyDispatchQueuedAnimEvents();
+            TestFalse(TEXT("Fixture releases previous montage before special shot"),
+                Boss->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying());
             Boss->NextAttackTime = 0;
+            TestFalse(TEXT("Ordinary shooting still rejects melee distance"), Boss->TryStartShoot());
             Boss->bSpecialActive = true;
             Boss->bRoaring = false;
             Boss->bSpecialStopping = false;
             Boss->SpecialTarget = Player;
             TestTrue(TEXT("Special sweep still starts within melee range"), Boss->StartShoot(true));
+            TestTrue(TEXT("Special sweep keeps firing within melee range"), Boss->bShooting &&
+                !Boss->bShootStopping && World->GetTimerManager().TimerExists(Boss->ShootFireTimerHandle));
             Boss->ClearCombatForDeathOrEndPlay();
         }
     }

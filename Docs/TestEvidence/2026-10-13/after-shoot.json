@@ -1,0 +1,42 @@
+{
+  "format": "Selected fields from Unreal Automation index.json; not a full original report",
+  "sourceRun": "20261013-123902-9f9208f1",
+  "sourceReportSHA256": "c9b19bfc3942c4151a735e17cfe26405f97ee3a37da560566775b382bf03b0b4",
+  "reportCreatedOnUTC": "2026.10.13-04.39.19",
+  "mode": "WindowsEditor Development, NullRHI",
+  "counts": {
+    "succeeded": 0,
+    "succeededWithWarnings": 1,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0
+  },
+  "tests": [
+    {
+      "name": "ShooterSam.Boss.Shoot.RangeAndSelection",
+      "state": "Success",
+      "events": [
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\DynamicInputScripts\\SequentialInt.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\ModuleScripts\\AddVectorToPosition.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\ModuleScripts\\FixShapeVector.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Warning",
+          "message": "LogLinker: [AssetLog] <ENGINE>\\Engine\\Plugins\\FX\\CascadeToNiagaraConverter\\Content\\NiagaraScripts\\DynamicInputScripts\\MakeQuatFromEuler.uasset: Asset has been saved with empty engine version. The asset will be loaded but may be incompatible."
+        },
+        {
+          "type": "Info",
+          "message": "Tree selection: active=ShooterBTTaskBossShoot_0 shooting=1 ready=0"
+        }
+      ]
+    }
+  ]
+}
